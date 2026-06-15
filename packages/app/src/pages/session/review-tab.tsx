@@ -1,5 +1,6 @@
-import { createEffect, on, onCleanup, type JSX } from "solid-js"
-import type { FileDiff } from "@opencode-ai/sdk/v2"
+import { createEffect, onCleanup, type JSX } from "solid-js"
+import { makeEventListener } from "@solid-primitives/event-listener"
+import type { SnapshotFileDiff, VcsFileDiff } from "@opencode-ai/sdk/v2"
 import { SessionReview } from "@opencode-ai/ui/session-review"
 import type {
   SessionReviewCommentActions,
@@ -13,10 +14,12 @@ import type { LineComment } from "@/context/comments"
 
 export type DiffStyle = "unified" | "split"
 
+type ReviewDiff = SnapshotFileDiff | VcsFileDiff
+
 export interface SessionReviewTabProps {
   title?: JSX.Element
   empty?: JSX.Element
-  diffs: () => FileDiff[]
+  diffs: () => ReviewDiff[]
   view: () => ReturnType<ReturnType<typeof useLayout>["view"]>
   diffStyle: DiffStyle
   onDiffStyleChange?: (style: DiffStyle) => void
@@ -29,7 +32,10 @@ export interface SessionReviewTabProps {
   focusedComment?: { file: string; id: string } | null
   onFocusedCommentChange?: (focus: { file: string; id: string } | null) => void
   focusedFile?: string
-  onScrollRef?: (el: HTMLDivElement) => void
+  onScrollRef?: (el: HTMLDivElement | undefined) => void
+  commentMentions?: {
+    items: (query: string) => string[] | Promise<string[]>
+  }
   classes?: {
     root?: string
     header?: string
@@ -37,25 +43,18 @@ export interface SessionReviewTabProps {
   }
 }
 
-export function StickyAddButton(props: { children: JSX.Element }) {
-  return (
-    <div class="bg-background-stronger h-full shrink-0 sticky right-0 z-10 flex items-center justify-center pr-3">
-      {props.children}
-    </div>
-  )
-}
-
 export function SessionReviewTab(props: SessionReviewTabProps) {
   let scroll: HTMLDivElement | undefined
   let restoreFrame: number | undefined
   let userInteracted = false
+  let restored: { x: number; y: number } | undefined
 
   const sdk = useSDK()
   const layout = useLayout()
 
   const readFile = async (path: string) => {
-    return sdk.client.file
-      .read({ path })
+    return sdk()
+      .client.file.read({ path })
       .then((x) => x.data)
       .catch((error) => {
         console.debug("[session-review] failed to read file", { path, error })
@@ -65,6 +64,11 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
 
   const handleInteraction = () => {
     userInteracted = true
+
+    if (restoreFrame !== undefined) {
+      cancelAnimationFrame(restoreFrame)
+      restoreFrame = undefined
+    }
   }
 
   const doRestore = () => {
@@ -82,8 +86,11 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
     const targetY = Math.min(s.y, maxY)
     const targetX = Math.min(s.x, maxX)
 
+    if (el.scrollTop === targetY && el.scrollLeft === targetX) return
+
     if (el.scrollTop !== targetY) el.scrollTop = targetY
     if (el.scrollLeft !== targetX) el.scrollLeft = targetX
+    restored = { x: el.scrollLeft, y: el.scrollTop }
   }
 
   const queueRestore = () => {
@@ -92,9 +99,16 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
   }
 
   const handleScroll = (event: Event & { currentTarget: HTMLDivElement }) => {
-    if (!layout.ready() || !userInteracted) return
-
     const el = event.currentTarget
+    const prev = restored
+    if (prev && el.scrollTop === prev.y && el.scrollLeft === prev.x) {
+      restored = undefined
+      return
+    }
+
+    restored = undefined
+    handleInteraction()
+    if (!layout.ready()) return
     if (el.clientHeight === 0 || el.clientWidth === 0) return
 
     props.view().setScroll("review", {
@@ -103,41 +117,16 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
     })
   }
 
-  createEffect(
-    on(
-      () => props.diffs().length,
-      () => queueRestore(),
-      { defer: true },
-    ),
-  )
-
-  createEffect(
-    on(
-      () => props.diffStyle,
-      () => queueRestore(),
-      { defer: true },
-    ),
-  )
-
-  createEffect(
-    on(
-      () => layout.ready(),
-      (ready) => {
-        if (!ready) return
-        queueRestore()
-      },
-      { defer: true },
-    ),
-  )
+  createEffect(() => {
+    props.diffs().length
+    props.diffStyle
+    if (!layout.ready()) return
+    queueRestore()
+  })
 
   onCleanup(() => {
     if (restoreFrame !== undefined) cancelAnimationFrame(restoreFrame)
-    if (scroll) {
-      scroll.removeEventListener("wheel", handleInteraction)
-      scroll.removeEventListener("pointerdown", handleInteraction)
-      scroll.removeEventListener("touchstart", handleInteraction)
-      scroll.removeEventListener("keydown", handleInteraction)
-    }
+    props.onScrollRef?.(undefined)
   })
 
   return (
@@ -146,10 +135,11 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
       empty={props.empty}
       scrollRef={(el) => {
         scroll = el
-        el.addEventListener("wheel", handleInteraction, { passive: true, capture: true })
-        el.addEventListener("pointerdown", handleInteraction, { passive: true, capture: true })
-        el.addEventListener("touchstart", handleInteraction, { passive: true, capture: true })
-        el.addEventListener("keydown", handleInteraction, { passive: true, capture: true })
+        makeEventListener(el, "wheel", handleInteraction, { passive: true, capture: true })
+        makeEventListener(el, "mousewheel", handleInteraction, { passive: true, capture: true })
+        makeEventListener(el, "pointerdown", handleInteraction, { passive: true, capture: true })
+        makeEventListener(el, "touchstart", handleInteraction, { passive: true, capture: true })
+        makeEventListener(el, "keydown", handleInteraction, { capture: true })
         props.onScrollRef?.(el)
         queueRestore()
       }}
@@ -158,7 +148,7 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
       open={props.view().review.open()}
       onOpenChange={props.view().review.setOpen}
       classes={{
-        root: props.classes?.root ?? "pb-6 pr-3",
+        root: props.classes?.root ?? "pr-3",
         header: props.classes?.header ?? "px-3",
         container: props.classes?.container ?? "pl-3",
       }}
@@ -172,6 +162,7 @@ export function SessionReviewTab(props: SessionReviewTabProps) {
       onLineCommentUpdate={props.onLineCommentUpdate}
       onLineCommentDelete={props.onLineCommentDelete}
       lineCommentActions={props.lineCommentActions}
+      lineCommentMention={props.commentMentions}
       comments={props.comments}
       focusedComment={props.focusedComment}
       onFocusedCommentChange={props.onFocusedCommentChange}

@@ -3,6 +3,9 @@ export const dict = {
   "ui.sessionReview.title.lastTurn": "Cambios del último turno",
   "ui.sessionReview.diffStyle.unified": "Unificado",
   "ui.sessionReview.diffStyle.split": "Dividido",
+  "ui.sessionReview.openFile": "Abrir archivo",
+  "ui.sessionReview.selection.line": "línea {{line}}",
+  "ui.sessionReview.selection.lines": "líneas {{start}}-{{end}}",
   "ui.sessionReview.expandAll": "Expandir todo",
   "ui.sessionReview.collapseAll": "Colapsar todo",
   "ui.sessionReview.change.added": "Añadido",
@@ -37,8 +40,20 @@ export const dict = {
 
   "ui.sessionTurn.retry.retrying": "reintentando",
   "ui.sessionTurn.retry.inSeconds": "en {{seconds}}s",
+  "ui.sessionTurn.retry.attempt": "intento #{{attempt}}",
+  "ui.sessionTurn.retry.attemptLine": "{{line}} - intento #{{attempt}}",
+  "ui.sessionTurn.retry.geminiHot": "gemini está demasiado saturado",
   "ui.sessionTurn.error.freeUsageExceeded": "Límite de uso gratuito excedido",
   "ui.sessionTurn.error.addCredits": "Añadir créditos",
+
+  "dialog.usageExceeded.freeTier.title": "Límite gratuito alcanzado",
+  "dialog.usageExceeded.freeTier.description":
+    "Suscríbete a OpenCode Go para acceso fiable a los mejores modelos de código abierto, desde $5/mes.",
+  "dialog.usageExceeded.freeTier.actionLabel": "Suscribirse",
+  "dialog.usageExceeded.accountRateLimit.title": "Límite de Go alcanzado",
+  "dialog.usageExceeded.accountRateLimit.description":
+    "Límite de uso alcanzado. Para seguir usando este modelo ahora, habilita el uso desde tu saldo disponible",
+  "dialog.usageExceeded.accountRateLimit.actionLabel": "Abrir configuración",
 
   "ui.sessionTurn.status.delegating": "Delegando trabajo",
   "ui.sessionTurn.status.planning": "Planificando siguientes pasos",
@@ -53,6 +68,14 @@ export const dict = {
   "ui.sessionTurn.status.gatheringThoughts": "Recopilando pensamientos",
   "ui.sessionTurn.status.consideringNextSteps": "Considerando siguientes pasos",
 
+  "ui.messagePart.questions.dismissed": "Preguntas descartadas",
+  "ui.messagePart.compaction": "Sesión compactada",
+  "ui.messagePart.context.read.one": "{{count}} lectura",
+  "ui.messagePart.context.read.other": "{{count}} lecturas",
+  "ui.messagePart.context.search.one": "{{count}} búsqueda",
+  "ui.messagePart.context.search.other": "{{count}} búsquedas",
+  "ui.messagePart.context.list.one": "{{count}} lista",
+  "ui.messagePart.context.list.other": "{{count}} listas",
   "ui.messagePart.diagnostic.error": "Error",
   "ui.messagePart.title.edit": "Editar",
   "ui.messagePart.title.write": "Escribir",
@@ -72,6 +95,7 @@ export const dict = {
   "ui.textField.copied": "Copiado",
 
   "ui.imagePreview.alt": "Vista previa de imagen",
+  "ui.scrollView.ariaLabel": "contenido desplazable",
 
   "ui.tool.read": "Leer",
   "ui.tool.loaded": "Cargado",
@@ -79,12 +103,14 @@ export const dict = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Webfetch",
+  "ui.tool.websearch": "Búsqueda web",
   "ui.tool.shell": "Shell",
   "ui.tool.patch": "Parche",
   "ui.tool.todos": "Tareas",
   "ui.tool.todos.read": "Leer tareas",
   "ui.tool.questions": "Preguntas",
   "ui.tool.agent": "Agente {{type}}",
+  "ui.tool.agent.default": "Agente",
 
   "ui.common.file.one": "archivo",
   "ui.common.file.other": "archivos",
@@ -108,9 +134,12 @@ export const dict = {
   "ui.message.collapse": "Colapsar mensaje",
   "ui.message.copy": "Copiar",
   "ui.message.copyMessage": "Copiar mensaje",
+  "ui.message.forkMessage": "Bifurcar a nueva sesión",
+  "ui.message.revertMessage": "Restablecer a este punto",
   "ui.message.copyResponse": "Copiar respuesta",
   "ui.message.copied": "¡Copiado!",
   "ui.message.interrupted": "Interrumpido",
+  "ui.message.queued": "En cola",
   "ui.message.attachment.alt": "adjunto",
 
   "ui.patch.action.deleted": "Eliminado",
@@ -124,4 +153,16 @@ export const dict = {
   "ui.question.multiHint": "Selecciona todas las que correspondan",
   "ui.question.singleHint": "Selecciona una respuesta",
   "ui.question.custom.placeholder": "Escribe tu respuesta...",
+
+  "ui.fileSearch.placeholder": "Buscar",
+  "ui.fileSearch.previousMatch": "Anterior",
+  "ui.fileSearch.nextMatch": "Siguiente",
+  "ui.fileSearch.close": "Cerrar búsqueda",
+  "ui.tool.task": "Tarea",
+  "ui.tool.skill": "Habilidad",
+  "ui.basicTool.called": "Llamado `{{tool}}`",
+  "ui.toolErrorCard.failed": "Falló",
+  "ui.toolErrorCard.copyError": "Copiar error",
+  "ui.message.duration.seconds": "{{count}}s",
+  "ui.message.duration.minutesSeconds": "{{minutes}}m {{seconds}}s",
 }
